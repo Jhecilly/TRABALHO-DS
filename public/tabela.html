@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Tabela de Controle de Gastos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h2 { color: #0074d9; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+        th { background: #f4f4f4; }
+        .status-normal { color: green; font-weight: bold; }
+        .status-critico { color: red; font-weight: bold; }
+        .qtd-normal { color: green; }
+        .qtd-critico { color: red; }
+        input[type="number"] { width: 60px; }
+        .search-box { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Tabela de Controle de Gastos</h2>
+    <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Procurar produto...">
+        <button onclick="searchProduct()">Buscar</button>
+        <button onclick="loadTable()">Limpar Busca</button>
+        <button onclick="resetTable()" style="background:#d90000; color:#fff; margin-left:20px;">Resetar Tabela</button>
+    </div>
+    <table id="materialsTable">
+        <thead>
+            <tr>
+                <th>Material</th>
+                <th>Categoria</th>
+                <th>Quantidade Atual</th>
+                <th>Nível Crítico</th>
+                <th>Status</th>
+                <th>Fornecedor</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Linhas da tabela aqui -->
+        </tbody>
+    </table>
+    <div style="text-align:center; margin-top:30px;">
+        <a href="index.html">Voltar ao início</a>
+    </div>
+    <script>
+        let materials = [];
+        let suppliers = [];
+
+        async function fetchData() {
+            // Força o fetch a não usar cache
+            const [matRes, supRes] = await Promise.all([
+                fetch('/api/materials', { cache: "no-store" }),
+                fetch('/api/suppliers', { cache: "no-store" })
+            ]);
+            materials = (await matRes.json()).filter(m => m && m.name); // só materiais válidos
+            suppliers = await supRes.json();
+        }
+
+        function getSupplierName(category) {
+            const supplier = suppliers.find(s => s.category === category);
+            return supplier ? supplier.name : '-';
+        }
+
+        function getStatus(qtd, crit) {
+            return qtd > crit ? 'Normal' : 'Crítico';
+        }
+
+        function getStatusClass(qtd, crit) {
+            return qtd > crit ? 'status-normal' : 'status-critico';
+        }
+
+        function getQtdClass(qtd, crit) {
+            return qtd > crit ? 'qtd-normal' : 'qtd-critico';
+        }
+
+        function renderTable(data) {
+            const tbody = document.querySelector('#materialsTable tbody');
+            tbody.innerHTML = '';
+            data.forEach(mat => {
+                const supplierName = getSupplierName(mat.category);
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${mat.name}</td>
+                        <td>${mat.category}</td>
+                        <td>
+                            <input type="number" min="0" value="${mat.quantity || 0}" 
+                                class="${getQtdClass(mat.quantity, mat.criticalLevel)}"
+                                onchange="updateQuantity(${mat.id}, this.value)">
+                        </td>
+                        <td>${mat.criticalLevel}</td>
+                        <td class="${getStatusClass(mat.quantity, mat.criticalLevel)}">${getStatus(mat.quantity, mat.criticalLevel)}</td>
+                        <td>${supplierName}</td>
+                        <td>
+                            <button onclick="deleteMaterial(${mat.id})" style="color:#fff; background:#d90000; border:none; border-radius:4px; padding:5px 10px; cursor:pointer;">Excluir</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function loadTable() {
+            await fetchData();
+            renderTable(materials);
+        }
+
+        async function updateQuantity(id, value) {
+            const res = await fetch('/api/materials/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ quantity: Number(value) })
+            });
+            if (res.ok) loadTable();
+        }
+
+        async function deleteMaterial(id) {
+            if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+            const res = await fetch('/api/materials/' + id, { method: 'DELETE' });
+            if (res.ok) {
+                await loadTable(); // Recarrega a tabela após exclusão
+            } else if (res.status === 404) {
+                alert('Produto já foi excluído ou não existe mais.');
+                await loadTable();
+            } else {
+                alert('Erro ao excluir produto.');
+            }
+        }
+
+        function searchProduct() {
+            const term = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!term) return loadTable();
+            const found = materials.filter(mat => mat.name.toLowerCase().includes(term));
+            renderTable(found);
+        }
+
+        async function resetTable() {
+            if (!confirm('Tem certeza que deseja apagar TODOS os produtos da tabela?')) return;
+            const res = await fetch('/api/materials', { method: 'DELETE' });
+            if (res.ok) {
+                await loadTable();
+            } else {
+                alert('Erro ao resetar a tabela.');
+            }
+        }
+
+        window.onload = loadTable;
+    </script>
+</body>
+</html>

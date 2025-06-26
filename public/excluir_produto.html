@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Excluir Produto</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h2 { color: #d90000; }
+        select, button { padding: 8px; margin-top: 10px; }
+        .msg { color: green; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Excluir Produto</h2>
+    <form id="deleteForm">
+        <label>Selecione o produto:
+            <select id="materialSelect" required></select>
+        </label>
+        <button type="submit">Excluir</button>
+    </form>
+    <div class="msg" id="msg"></div>
+    <div style="margin-top:30px;">
+        <a href="index.html">Voltar ao início</a>
+    </div>
+    <script>
+        async function loadMaterials() {
+            const res = await fetch('/api/materials');
+            const materials = await res.json();
+            const select = document.getElementById('materialSelect');
+            select.innerHTML = '';
+            document.getElementById('msg').textContent = ''; // Limpa mensagem ao recarregar
+            if (materials.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Nenhum produto cadastrado';
+                select.appendChild(opt);
+                select.disabled = true;
+            } else {
+                select.disabled = false;
+                materials.forEach(mat => {
+                    const opt = document.createElement('option');
+                    opt.value = mat.id;
+                    opt.textContent = mat.name + ' (' + mat.category + ')';
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        document.getElementById('deleteForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('materialSelect').value;
+            if (!id) return;
+            const res = await fetch('/api/materials/' + id, { method: 'DELETE' });
+            if (res.ok) {
+                document.getElementById('msg').textContent = 'Produto excluído com sucesso!';
+                await loadMaterials();
+            } else {
+                document.getElementById('msg').textContent = 'Erro ao excluir produto.';
+            }
+        };
+
+        window.onload = loadMaterials;
+    </script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Excluir Fornecedor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h2 { color: #d90000; }
+        select, button { padding: 8px; margin-top: 10px; }
+        .msg { color: green; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Excluir Fornecedor</h2>
+    <form id="deleteForm">
+        <label>Selecione o fornecedor:
+            <select id="supplierSelect" required></select>
+        </label>
+        <button type="submit">Excluir</button>
+    </form>
+    <div class="msg" id="msg"></div>
+    <div style="margin-top:30px;">
+        <a href="index.html">Voltar ao início</a>
+    </div>
+    <script>
+        async function loadSuppliers() {
+            const res = await fetch('/api/suppliers');
+            const suppliers = await res.json();
+            const select = document.getElementById('supplierSelect');
+            select.innerHTML = '';
+            suppliers.forEach(sup => {
+                const opt = document.createElement('option');
+                opt.value = sup.id;
+                opt.textContent = sup.name + ' (' + sup.category + ')';
+                select.appendChild(opt);
+            });
+        }
+
+        document.getElementById('deleteForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('supplierSelect').value;
+            if (!id) return;
+            const res = await fetch('/api/suppliers/' + id, { method: 'DELETE' });
+            if (res.ok) {
+                document.getElementById('msg').textContent = 'Fornecedor excluído com sucesso!';
+                await loadSuppliers();
+            } else {
+                document.getElementById('msg').textContent = 'Erro ao excluir fornecedor.';
+            }
+        };
+
+        window.onload = loadSuppliers;
+    </script>
+</body>
+</html>
