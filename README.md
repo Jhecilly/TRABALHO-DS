@@ -33,6 +33,14 @@ O site ficará disponível em `http://localhost:3000` (ou outra porta configurad
 - `README.md` — Documentação do projeto
 - `node_modules/` — Dependências instaladas (gerado automaticamente)
 
+## ▶️ Demonstração em Vídeo
+
+Veja um exemplo de uso do sistema no vídeo abaixo:
+
+[![Clique para assistir](https://img.youtube.com/vi/placeholder/hqdefault.jpg)](EXEMPLO%20EMV%C3%8DDEO.mp4)
+
+Caso o player não apareça, você pode baixar ou abrir o vídeo diretamente: [EXEMPLO EMVÍDEO.mp4](EXEMPLO%20EMV%C3%8DDEO.mp4)
+
 ## EQUIPE
 
 Integrantes:  
