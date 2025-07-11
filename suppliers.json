@@ -1,2 +1,7 @@
 [
-]
+    {
+        "id": 1,
+        "nome": "Fornecedor Exemplo",
+        "email": "contato@fornecedor.com",
+        "telefone": "(00) 0000-0000"
+    }]
